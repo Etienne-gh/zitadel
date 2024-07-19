@@ -138,6 +138,70 @@ func TestCommandSide_AddSMTPConfig(t *testing.T) {
 			},
 		},
 		{
+			name: "add smtp config, not auth",
+			fields: fields{
+				eventstore: eventstoreExpect(
+					t,
+					expectFilter(
+						eventFromEventPusher(
+							instance.NewDomainAddedEvent(context.Background(),
+								&instance.NewAggregate("INSTANCE").Aggregate,
+								"domain.ch",
+								false,
+							),
+						),
+						eventFromEventPusher(
+							instance.NewDomainPolicyAddedEvent(context.Background(),
+								&instance.NewAggregate("INSTANCE").Aggregate,
+								true, true, false,
+							),
+						),
+					),
+					expectPush(
+						instance.NewSMTPConfigAddedEvent(
+							context.Background(),
+							&instance.NewAggregate("INSTANCE").Aggregate,
+							"configid",
+							"test",
+							true,
+							"from@domain.ch",
+							"name",
+							"",
+							"host:587",
+							"",
+							&crypto.CryptoValue{
+								CryptoType: crypto.TypeEncryption,
+								Algorithm:  "enc",
+								KeyID:      "id",
+								Crypted:    []byte(""),
+							},
+						),
+					),
+				),
+				idGenerator: id_mock.NewIDGeneratorExpectIDs(t, "configid"),
+				alg:         crypto.CreateMockEncryptionAlg(gomock.NewController(t)),
+			},
+			args: args{
+				ctx: authz.WithInstanceID(context.Background(), "INSTANCE"),
+				smtp: &smtp.Config{
+					Description: "test",
+					Tls:         true,
+					From:        "from@domain.ch",
+					FromName:    "name",
+					SMTP: smtp.SMTP{
+						Host:     "host:587",
+						User:     "",
+						Password: "",
+					},
+				},
+			},
+			res: res{
+				want: &domain.ObjectDetails{
+					ResourceOwner: "INSTANCE",
+				},
+			},
+		},
+		{
 			name: "add smtp config with reply to address, ok",
 			fields: fields{
 				eventstore: eventstoreExpect(

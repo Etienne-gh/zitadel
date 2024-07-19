@@ -36,11 +36,9 @@ func (c *Commands) AddSMTPConfig(ctx context.Context, instanceID string, config 
 	}
 
 	var smtpPassword *crypto.CryptoValue
-	if config.SMTP.Password != "" {
-		smtpPassword, err = crypto.Encrypt([]byte(config.SMTP.Password), c.smtpEncryption)
-		if err != nil {
-			return "", nil, err
-		}
+	smtpPassword, err = crypto.Encrypt([]byte(config.SMTP.Password), c.smtpEncryption)
+	if err != nil {
+		return "", nil, err
 	}
 
 	smtpConfigWriteModel, err := c.getSMTPConfig(ctx, instanceID, id, senderDomain)
